@@ -281,33 +281,33 @@ public:
 
     bool    init(uint8_t xtal_load_c, uint32_t ref_osc_freq, int32_t corr);
     void    reset(void);
-    uint8_t set_freq(uint64_t freq, enum si5351_clock clk);
-    uint8_t set_freq_manual(uint64_t freq, uint64_t pll_freq, enum si5351_clock clk);
-    void    set_pll(uint64_t pll_freq, enum si5351_pll target_pll);
-    void    set_ms(enum si5351_clock clk, struct Si5351RegSet ms_reg,
+    uint8_t setFreq(uint64_t freq, enum si5351_clock clk);
+    uint8_t setFreqManual(uint64_t freq, uint64_t pll_freq, enum si5351_clock clk);
+    void    setPll(uint64_t pll_freq, enum si5351_pll target_pll);
+    void    setMs(enum si5351_clock clk, struct Si5351RegSet ms_reg,
                    uint8_t int_mode, uint8_t r_div, uint8_t div_by_4);
-    void    output_enable(enum si5351_clock clk, uint8_t enable);
-    void    drive_strength(enum si5351_clock clk, enum si5351_drive drive);
-    void    update_status(void);
-    void    set_correction(int32_t corr, enum si5351_pll_input ref_osc);
-    void    set_phase(enum si5351_clock clk, uint8_t phase);
-    int32_t get_correction(enum si5351_pll_input ref_osc);
-    void    pll_reset(enum si5351_pll target_pll);
-    void    set_ms_source(enum si5351_clock clk, enum si5351_pll pll);
-    void    set_int(enum si5351_clock clk, uint8_t enable);
-    void    set_clock_pwr(enum si5351_clock clk, uint8_t pwr);
-    void    set_clock_invert(enum si5351_clock clk, uint8_t inv);
-    void    set_clock_source(enum si5351_clock clk, enum si5351_clock_source src);
-    void    set_clock_disable(enum si5351_clock clk, enum si5351_clock_disable dis_state);
-    void    set_clock_fanout(enum si5351_clock_fanout fanout, uint8_t enable);
-    void    set_pll_input(enum si5351_pll pll, enum si5351_pll_input input);
-    void    set_vcxo(uint64_t pll_freq, uint8_t ppm);
-    void    set_ref_freq(uint32_t ref_freq, enum si5351_pll_input ref_osc);
+    void    outputEnable(enum si5351_clock clk, uint8_t enable);
+    void    driveStrength(enum si5351_clock clk, enum si5351_drive drive);
+    void    updateStatus(void);
+    void    setCorrection(int32_t corr, enum si5351_pll_input ref_osc);
+    void    setPhase(enum si5351_clock clk, uint8_t phase);
+    int32_t getCorrection(enum si5351_pll_input ref_osc);
+    void    pllReset(enum si5351_pll target_pll);
+    void    setMsSource(enum si5351_clock clk, enum si5351_pll pll);
+    void    setInt(enum si5351_clock clk, uint8_t enable);
+    void    setClockPwr(enum si5351_clock clk, uint8_t pwr);
+    void    setClockInvert(enum si5351_clock clk, uint8_t inv);
+    void    setClockSource(enum si5351_clock clk, enum si5351_clock_source src);
+    void    setClockDisable(enum si5351_clock clk, enum si5351_clock_disable dis_state);
+    void    setClockFanout(enum si5351_clock_fanout fanout, uint8_t enable);
+    void    setPllInput(enum si5351_pll pll, enum si5351_pll_input input);
+    void    setVcxo(uint64_t pll_freq, uint8_t ppm);
+    void    setRefFreq(uint32_t ref_freq, enum si5351_pll_input ref_osc);
 
     /* Low-level I2C access (public for advanced users) */
-    HAL_StatusTypeDef si5351_write_bulk(uint8_t addr, uint8_t bytes, uint8_t *data);
-    HAL_StatusTypeDef si5351_write(uint8_t addr, uint8_t data);
-    uint8_t           si5351_read(uint8_t addr);
+    HAL_StatusTypeDef writeBulk(uint8_t addr, uint8_t bytes, uint8_t *data);
+    HAL_StatusTypeDef write(uint8_t addr, uint8_t data);
+    uint8_t           read(uint8_t addr);
 
     /* Public status structs */
     struct Si5351Status    dev_status    = {0, 0, 0, 0, 0};
@@ -322,15 +322,15 @@ public:
     uint32_t xtal_freq[2];
 
 private:
-    uint64_t pll_calc(enum si5351_pll pll, uint64_t freq,
+    uint64_t pllCalc(enum si5351_pll pll, uint64_t freq,
                       struct Si5351RegSet *reg, int32_t correction, uint8_t vcxo);
-    uint64_t multisynth_calc(uint64_t freq, uint64_t pll_freq, struct Si5351RegSet *reg);
-    uint64_t multisynth67_calc(uint64_t freq, uint64_t pll_freq, struct Si5351RegSet *reg);
-    void     update_sys_status(struct Si5351Status *status);
-    void     update_int_status(struct Si5351IntStatus *int_status);
-    void     ms_div(enum si5351_clock clk, uint8_t r_div, uint8_t div_by_4);
-    uint8_t  select_r_div(uint64_t *freq);
-    uint8_t  select_r_div_ms67(uint64_t *freq);
+    uint64_t multisynthCalc(uint64_t freq, uint64_t pll_freq, struct Si5351RegSet *reg);
+    uint64_t multisynth67Calc(uint64_t freq, uint64_t pll_freq, struct Si5351RegSet *reg);
+    void     updateSysStatus(struct Si5351Status *status);
+    void     updateIntStatus(struct Si5351IntStatus *int_status);
+    void     msDiv(enum si5351_clock clk, uint8_t r_div, uint8_t div_by_4);
+    uint8_t  selectRDiv(uint64_t *freq);
+    uint8_t  selectRDivMs67(uint64_t *freq);
 
     int32_t           ref_correction[2];
     uint8_t           clkin_div;

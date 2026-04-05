@@ -77,28 +77,28 @@ bool Si5351::init(uint8_t xtal_load_c, uint32_t xo_freq, int32_t corr)
     uint8_t status_reg;
     do
     {
-        status_reg = si5351_read(SI5351_DEVICE_STATUS);
+        status_reg = read(SI5351_DEVICE_STATUS);
     } while ((status_reg >> 7) == 1);
 
     /* Set crystal load capacitance */
-    si5351_write(SI5351_CRYSTAL_LOAD,
+    write(SI5351_CRYSTAL_LOAD,
                  (xtal_load_c & SI5351_CRYSTAL_LOAD_MASK) | 0x12);
 
     /* Set reference oscillator frequencies */
     if (xo_freq != 0)
     {
-        set_ref_freq(xo_freq, SI5351_PLL_INPUT_XO);
-        set_ref_freq(xo_freq, SI5351_PLL_INPUT_CLKIN);
+        setRefFreq(xo_freq, SI5351_PLL_INPUT_XO);
+        setRefFreq(xo_freq, SI5351_PLL_INPUT_CLKIN);
     }
     else
     {
-        set_ref_freq(SI5351_XTAL_FREQ, SI5351_PLL_INPUT_XO);
-        set_ref_freq(SI5351_XTAL_FREQ, SI5351_PLL_INPUT_CLKIN);
+        setRefFreq(SI5351_XTAL_FREQ, SI5351_PLL_INPUT_XO);
+        setRefFreq(SI5351_XTAL_FREQ, SI5351_PLL_INPUT_CLKIN);
     }
 
     /* Apply frequency calibration */
-    set_correction(corr, SI5351_PLL_INPUT_XO);
-    set_correction(corr, SI5351_PLL_INPUT_CLKIN);
+    setCorrection(corr, SI5351_PLL_INPUT_XO);
+    setCorrection(corr, SI5351_PLL_INPUT_CLKIN);
 
     reset();
 
@@ -113,28 +113,28 @@ bool Si5351::init(uint8_t xtal_load_c, uint32_t xo_freq, int32_t corr)
 void Si5351::reset(void)
 {
     /* Power down all outputs first */
-    si5351_write(16, 0x80);
-    si5351_write(17, 0x80);
-    si5351_write(18, 0x80);
-    si5351_write(19, 0x80);
-    si5351_write(20, 0x80);
-    si5351_write(21, 0x80);
-    si5351_write(22, 0x80);
-    si5351_write(23, 0x80);
+    write(16, 0x80);
+    write(17, 0x80);
+    write(18, 0x80);
+    write(19, 0x80);
+    write(20, 0x80);
+    write(21, 0x80);
+    write(22, 0x80);
+    write(23, 0x80);
 
     /* Turn outputs back on */
-    si5351_write(16, 0x0c);
-    si5351_write(17, 0x0c);
-    si5351_write(18, 0x0c);
-    si5351_write(19, 0x0c);
-    si5351_write(20, 0x0c);
-    si5351_write(21, 0x0c);
-    si5351_write(22, 0x0c);
-    si5351_write(23, 0x0c);
+    write(16, 0x0c);
+    write(17, 0x0c);
+    write(18, 0x0c);
+    write(19, 0x0c);
+    write(20, 0x0c);
+    write(21, 0x0c);
+    write(22, 0x0c);
+    write(23, 0x0c);
 
     /* Set PLLA and PLLB to 800 MHz for automatic tuning */
-    set_pll(SI5351_PLL_FIXED, SI5351_PLLA);
-    set_pll(SI5351_PLL_FIXED, SI5351_PLLB);
+    setPll(SI5351_PLL_FIXED, SI5351_PLLA);
+    setPll(SI5351_PLL_FIXED, SI5351_PLLB);
 
     /* Default PLL → clock assignments */
     pll_assignment[0] = SI5351_PLLA;
@@ -146,35 +146,35 @@ void Si5351::reset(void)
     pll_assignment[6] = SI5351_PLLB;
     pll_assignment[7] = SI5351_PLLB;
 
-    set_ms_source(SI5351_CLK0, SI5351_PLLA);
-    set_ms_source(SI5351_CLK1, SI5351_PLLA);
-    set_ms_source(SI5351_CLK2, SI5351_PLLA);
-    set_ms_source(SI5351_CLK3, SI5351_PLLA);
-    set_ms_source(SI5351_CLK4, SI5351_PLLA);
-    set_ms_source(SI5351_CLK5, SI5351_PLLA);
-    set_ms_source(SI5351_CLK6, SI5351_PLLB);
-    set_ms_source(SI5351_CLK7, SI5351_PLLB);
+    setMsSource(SI5351_CLK0, SI5351_PLLA);
+    setMsSource(SI5351_CLK1, SI5351_PLLA);
+    setMsSource(SI5351_CLK2, SI5351_PLLA);
+    setMsSource(SI5351_CLK3, SI5351_PLLA);
+    setMsSource(SI5351_CLK4, SI5351_PLLA);
+    setMsSource(SI5351_CLK5, SI5351_PLLA);
+    setMsSource(SI5351_CLK6, SI5351_PLLB);
+    setMsSource(SI5351_CLK7, SI5351_PLLB);
 
     /* Reset VCXO parameters */
-    si5351_write(SI5351_VXCO_PARAMETERS_LOW,  0);
-    si5351_write(SI5351_VXCO_PARAMETERS_MID,  0);
-    si5351_write(SI5351_VXCO_PARAMETERS_HIGH, 0);
+    write(SI5351_VXCO_PARAMETERS_LOW,  0);
+    write(SI5351_VXCO_PARAMETERS_MID,  0);
+    write(SI5351_VXCO_PARAMETERS_HIGH, 0);
 
     /* Reset both PLLs */
-    pll_reset(SI5351_PLLA);
-    pll_reset(SI5351_PLLB);
+    pllReset(SI5351_PLLA);
+    pllReset(SI5351_PLLB);
 
     /* Clear clock frequencies and disable all outputs */
     for (uint8_t i = 0; i < 8; i++)
     {
         clk_freq[i]      = 0;
         clk_first_set[i] = false;
-        output_enable((enum si5351_clock)i, 0);
+        outputEnable((enum si5351_clock)i, 0);
     }
 }
 
 /*
- * set_freq(uint64_t freq, enum si5351_clock clk)
+ * setFreq(uint64_t freq, enum si5351_clock clk)
  *
  * Set the output frequency of a CLK output (8 kHz – 150 MHz).
  * freq is in Hz (no multiplier — multiply by SI5351_FREQ_MULT yourself
@@ -182,7 +182,7 @@ void Si5351::reset(void)
  *
  * Returns 0 on success, 1 if the frequency cannot be set.
  */
-uint8_t Si5351::set_freq(uint64_t freq, enum si5351_clock clk)
+uint8_t Si5351::setFreq(uint64_t freq, enum si5351_clock clk)
 {
     struct Si5351RegSet ms_reg;
     uint64_t pll_freq;
@@ -216,14 +216,14 @@ uint8_t Si5351::set_freq(uint64_t freq, enum si5351_clock clk)
 
             if (clk_first_set[(uint8_t)clk] == false)
             {
-                output_enable(clk, 1);
+                outputEnable(clk, 1);
                 clk_first_set[(uint8_t)clk] = true;
             }
 
             clk_freq[(uint8_t)clk] = freq;
 
-            pll_freq = multisynth_calc(freq, 0, &ms_reg);
-            set_pll(pll_freq, pll_assignment[clk]);
+            pll_freq = multisynthCalc(freq, 0, &ms_reg);
+            setPll(pll_freq, pll_assignment[clk]);
 
             /* Recalculate all other synths on the same PLL */
             for (uint8_t i = 0; i < 6; i++)
@@ -233,8 +233,8 @@ uint8_t Si5351::set_freq(uint64_t freq, enum si5351_clock clk)
                     struct Si5351RegSet temp_reg;
                     uint64_t temp_freq = clk_freq[i];
 
-                    r_div = select_r_div(&temp_freq);
-                    multisynth_calc(temp_freq, pll_freq, &temp_reg);
+                    r_div = selectRDiv(&temp_freq);
+                    multisynthCalc(temp_freq, pll_freq, &temp_reg);
 
                     if (temp_freq >= SI5351_MULTISYNTH_DIVBY4_FREQ * SI5351_FREQ_MULT)
                     {
@@ -247,11 +247,11 @@ uint8_t Si5351::set_freq(uint64_t freq, enum si5351_clock clk)
                         int_mode = 0;
                     }
 
-                    set_ms((enum si5351_clock)i, temp_reg, int_mode, r_div, div_by_4);
+                    setMs((enum si5351_clock)i, temp_reg, int_mode, r_div, div_by_4);
                 }
             }
 
-            pll_reset(pll_assignment[clk]);
+            pllReset(pll_assignment[clk]);
         }
         else
         {
@@ -259,18 +259,18 @@ uint8_t Si5351::set_freq(uint64_t freq, enum si5351_clock clk)
 
             if (clk_first_set[(uint8_t)clk] == false)
             {
-                output_enable(clk, 1);
+                outputEnable(clk, 1);
                 clk_first_set[(uint8_t)clk] = true;
             }
 
-            r_div = select_r_div(&freq);
+            r_div = selectRDiv(&freq);
 
             if (pll_assignment[clk] == SI5351_PLLA)
-                multisynth_calc(freq, plla_freq, &ms_reg);
+                multisynthCalc(freq, plla_freq, &ms_reg);
             else
-                multisynth_calc(freq, pllb_freq, &ms_reg);
+                multisynthCalc(freq, pllb_freq, &ms_reg);
 
-            set_ms(clk, ms_reg, int_mode, r_div, div_by_4);
+            setMs(clk, ms_reg, int_mode, r_div, div_by_4);
         }
 
         return 0;
@@ -295,8 +295,8 @@ uint8_t Si5351::set_freq(uint64_t freq, enum si5351_clock clk)
                         return 1;
 
                     clk_freq[(uint8_t)clk] = freq;
-                    r_div = select_r_div_ms67(&freq);
-                    multisynth67_calc(freq, pllb_freq, &ms_reg);
+                    r_div = selectRDivMs67(&freq);
+                    multisynth67Calc(freq, pllb_freq, &ms_reg);
                 }
                 else
                 {
@@ -306,9 +306,9 @@ uint8_t Si5351::set_freq(uint64_t freq, enum si5351_clock clk)
             else
             {
                 clk_freq[(uint8_t)clk] = freq;
-                r_div = select_r_div_ms67(&freq);
-                pll_freq = multisynth67_calc(freq, 0, &ms_reg);
-                set_pll(pll_freq, SI5351_PLLB);
+                r_div = selectRDivMs67(&freq);
+                pll_freq = multisynth67Calc(freq, 0, &ms_reg);
+                setPll(pll_freq, SI5351_PLLB);
             }
         }
         else /* SI5351_CLK7 */
@@ -321,8 +321,8 @@ uint8_t Si5351::set_freq(uint64_t freq, enum si5351_clock clk)
                         return 1;
 
                     clk_freq[(uint8_t)clk] = freq;
-                    r_div = select_r_div_ms67(&freq);
-                    multisynth67_calc(freq, pllb_freq, &ms_reg);
+                    r_div = selectRDivMs67(&freq);
+                    multisynth67Calc(freq, pllb_freq, &ms_reg);
                 }
                 else
                 {
@@ -332,27 +332,27 @@ uint8_t Si5351::set_freq(uint64_t freq, enum si5351_clock clk)
             else
             {
                 clk_freq[(uint8_t)clk] = freq;
-                r_div = select_r_div_ms67(&freq);
-                pll_freq = multisynth67_calc(freq, 0, &ms_reg);
-                set_pll(pll_freq, pll_assignment[clk]);
+                r_div = selectRDivMs67(&freq);
+                pll_freq = multisynth67Calc(freq, 0, &ms_reg);
+                setPll(pll_freq, pll_assignment[clk]);
             }
         }
 
         div_by_4 = 0;
         int_mode = 0;
-        set_ms(clk, ms_reg, int_mode, r_div, div_by_4);
+        setMs(clk, ms_reg, int_mode, r_div, div_by_4);
         return 0;
     }
 }
 
 /*
- * set_freq_manual(uint64_t freq, uint64_t pll_freq, enum si5351_clock clk)
+ * setFreqManual(uint64_t freq, uint64_t pll_freq, enum si5351_clock clk)
  *
  * Set the output frequency using a manually specified PLL frequency.
  * The caller is responsible for ensuring the PLL is correctly configured
  * and the MS is assigned to it.
  */
-uint8_t Si5351::set_freq_manual(uint64_t freq, uint64_t pll_freq,
+uint8_t Si5351::setFreqManual(uint64_t freq, uint64_t pll_freq,
                                  enum si5351_clock clk)
 {
     struct Si5351RegSet ms_reg;
@@ -368,11 +368,11 @@ uint8_t Si5351::set_freq_manual(uint64_t freq, uint64_t pll_freq,
 
     clk_freq[(uint8_t)clk] = freq;
 
-    set_pll(pll_freq, pll_assignment[clk]);
-    output_enable(clk, 1);
+    setPll(pll_freq, pll_assignment[clk]);
+    outputEnable(clk, 1);
 
-    r_div = select_r_div(&freq);
-    multisynth_calc(freq, pll_freq, &ms_reg);
+    r_div = selectRDiv(&freq);
+    multisynthCalc(freq, pll_freq, &ms_reg);
 
     if (freq >= SI5351_MULTISYNTH_DIVBY4_FREQ * SI5351_FREQ_MULT)
     {
@@ -380,24 +380,24 @@ uint8_t Si5351::set_freq_manual(uint64_t freq, uint64_t pll_freq,
         int_mode = 1;
     }
 
-    set_ms(clk, ms_reg, int_mode, r_div, div_by_4);
+    setMs(clk, ms_reg, int_mode, r_div, div_by_4);
     return 0;
 }
 
 /*
- * set_pll(uint64_t pll_freq, enum si5351_pll target_pll)
+ * setPll(uint64_t pll_freq, enum si5351_pll target_pll)
  *
  * Set one of the two PLLs to a specific VCO frequency.
  * pll_freq is in Hz * SI5351_FREQ_MULT (i.e. Hz * 100).
  */
-void Si5351::set_pll(uint64_t pll_freq, enum si5351_pll target_pll)
+void Si5351::setPll(uint64_t pll_freq, enum si5351_pll target_pll)
 {
     struct Si5351RegSet pll_reg;
 
     if (target_pll == SI5351_PLLA)
-        pll_calc(SI5351_PLLA, pll_freq, &pll_reg, ref_correction[plla_ref_osc], 0);
+        pllCalc(SI5351_PLLA, pll_freq, &pll_reg, ref_correction[plla_ref_osc], 0);
     else
-        pll_calc(SI5351_PLLB, pll_freq, &pll_reg, ref_correction[pllb_ref_osc], 0);
+        pllCalc(SI5351_PLLB, pll_freq, &pll_reg, ref_correction[pllb_ref_osc], 0);
 
     /* Build the 8-byte parameter block on the stack */
     uint8_t params[8];
@@ -415,23 +415,23 @@ void Si5351::set_pll(uint64_t pll_freq, enum si5351_pll target_pll)
 
     if (target_pll == SI5351_PLLA)
     {
-        si5351_write_bulk(SI5351_PLLA_PARAMETERS, i, params);
+        writeBulk(SI5351_PLLA_PARAMETERS, i, params);
         plla_freq = pll_freq;
     }
     else
     {
-        si5351_write_bulk(SI5351_PLLB_PARAMETERS, i, params);
+        writeBulk(SI5351_PLLB_PARAMETERS, i, params);
         pllb_freq = pll_freq;
     }
 }
 
 /*
- * set_ms(enum si5351_clock clk, struct Si5351RegSet ms_reg,
+ * setMs(enum si5351_clock clk, struct Si5351RegSet ms_reg,
  *        uint8_t int_mode, uint8_t r_div, uint8_t div_by_4)
  *
  * Write Multisynth parameters directly (advanced use).
  */
-void Si5351::set_ms(enum si5351_clock clk, struct Si5351RegSet ms_reg,
+void Si5351::setMs(enum si5351_clock clk, struct Si5351RegSet ms_reg,
                     uint8_t int_mode, uint8_t r_div, uint8_t div_by_4)
 {
     uint8_t params[8];
@@ -444,7 +444,7 @@ void Si5351::set_ms(enum si5351_clock clk, struct Si5351RegSet ms_reg,
         params[i++] = (uint8_t)((ms_reg.p3 >> 8) & 0xFF);
         params[i++] = (uint8_t)( ms_reg.p3        & 0xFF);
 
-        reg_val  = si5351_read((SI5351_CLK0_PARAMETERS + 2) + (clk * 8));
+        reg_val  = read((SI5351_CLK0_PARAMETERS + 2) + (clk * 8));
         reg_val &= ~(0x03);
         params[i++] = reg_val | (uint8_t)((ms_reg.p1 >> 16) & 0x03);
 
@@ -464,71 +464,71 @@ void Si5351::set_ms(enum si5351_clock clk, struct Si5351RegSet ms_reg,
     switch (clk)
     {
     case SI5351_CLK0:
-        si5351_write_bulk(SI5351_CLK0_PARAMETERS, i, params);
-        set_int(clk, int_mode);
-        ms_div(clk, r_div, div_by_4);
+        writeBulk(SI5351_CLK0_PARAMETERS, i, params);
+        setInt(clk, int_mode);
+        msDiv(clk, r_div, div_by_4);
         break;
     case SI5351_CLK1:
-        si5351_write_bulk(SI5351_CLK1_PARAMETERS, i, params);
-        set_int(clk, int_mode);
-        ms_div(clk, r_div, div_by_4);
+        writeBulk(SI5351_CLK1_PARAMETERS, i, params);
+        setInt(clk, int_mode);
+        msDiv(clk, r_div, div_by_4);
         break;
     case SI5351_CLK2:
-        si5351_write_bulk(SI5351_CLK2_PARAMETERS, i, params);
-        set_int(clk, int_mode);
-        ms_div(clk, r_div, div_by_4);
+        writeBulk(SI5351_CLK2_PARAMETERS, i, params);
+        setInt(clk, int_mode);
+        msDiv(clk, r_div, div_by_4);
         break;
     case SI5351_CLK3:
-        si5351_write_bulk(SI5351_CLK3_PARAMETERS, i, params);
-        set_int(clk, int_mode);
-        ms_div(clk, r_div, div_by_4);
+        writeBulk(SI5351_CLK3_PARAMETERS, i, params);
+        setInt(clk, int_mode);
+        msDiv(clk, r_div, div_by_4);
         break;
     case SI5351_CLK4:
-        si5351_write_bulk(SI5351_CLK4_PARAMETERS, i, params);
-        set_int(clk, int_mode);
-        ms_div(clk, r_div, div_by_4);
+        writeBulk(SI5351_CLK4_PARAMETERS, i, params);
+        setInt(clk, int_mode);
+        msDiv(clk, r_div, div_by_4);
         break;
     case SI5351_CLK5:
-        si5351_write_bulk(SI5351_CLK5_PARAMETERS, i, params);
-        set_int(clk, int_mode);
-        ms_div(clk, r_div, div_by_4);
+        writeBulk(SI5351_CLK5_PARAMETERS, i, params);
+        setInt(clk, int_mode);
+        msDiv(clk, r_div, div_by_4);
         break;
     case SI5351_CLK6:
-        si5351_write(SI5351_CLK6_PARAMETERS, temp);
-        ms_div(clk, r_div, div_by_4);
+        write(SI5351_CLK6_PARAMETERS, temp);
+        msDiv(clk, r_div, div_by_4);
         break;
     case SI5351_CLK7:
-        si5351_write(SI5351_CLK7_PARAMETERS, temp);
-        ms_div(clk, r_div, div_by_4);
+        write(SI5351_CLK7_PARAMETERS, temp);
+        msDiv(clk, r_div, div_by_4);
         break;
     }
 }
 
 /*
- * output_enable(enum si5351_clock clk, uint8_t enable)
+ * outputEnable(enum si5351_clock clk, uint8_t enable)
  *
  * Enable (1) or disable (0) a clock output.
  */
-void Si5351::output_enable(enum si5351_clock clk, uint8_t enable)
+void Si5351::outputEnable(enum si5351_clock clk, uint8_t enable)
 {
-    uint8_t reg_val = si5351_read(SI5351_OUTPUT_ENABLE_CTRL);
+    uint8_t reg_val = read(SI5351_OUTPUT_ENABLE_CTRL);
 
     if (enable == 1)
         reg_val &= ~(1 << (uint8_t)clk);
     else
         reg_val |=  (1 << (uint8_t)clk);
 
-    si5351_write(SI5351_OUTPUT_ENABLE_CTRL, reg_val);
+    write(SI5351_OUTPUT_ENABLE_CTRL, reg_val);
 }
 
 /*
- * drive_strength(enum si5351_clock clk, enum si5351_drive drive)
+ * driveStrength(enum si5351_clock clk, enum si5351_drive drive)
  *
  * Set the output drive strength of a clock output.
  */
-void Si5351::drive_strength(enum si5351_clock clk, enum si5351_drive drive)
+void Si5351::driveStrength(enum si5351_clock clk, enum si5351_drive drive)
 {
-    uint8_t reg_val = si5351_read(SI5351_CLK0_CTRL + (uint8_t)clk);
+    uint8_t reg_val = read(SI5351_CLK0_CTRL + (uint8_t)clk);
     reg_val &= ~(0x03);
 
     switch (drive)
@@ -540,146 +540,146 @@ void Si5351::drive_strength(enum si5351_clock clk, enum si5351_drive drive)
     default: break;
     }
 
-    si5351_write(SI5351_CLK0_CTRL + (uint8_t)clk, reg_val);
+    write(SI5351_CLK0_CTRL + (uint8_t)clk, reg_val);
 }
 
 /*
- * update_status(void)
+ * updateStatus(void)
  *
  * Refresh dev_status and dev_int_status from the device registers.
  */
-void Si5351::update_status(void)
+void Si5351::updateStatus(void)
 {
-    update_sys_status(&dev_status);
-    update_int_status(&dev_int_status);
+    updateSysStatus(&dev_status);
+    updateIntStatus(&dev_int_status);
 }
 
 /*
- * set_correction(int32_t corr, enum si5351_pll_input ref_osc)
+ * setCorrection(int32_t corr, enum si5351_pll_input ref_osc)
  *
  * Store a parts-per-billion correction for the chosen reference
  * oscillator and recalculate both PLLs.
  */
-void Si5351::set_correction(int32_t corr, enum si5351_pll_input ref_osc)
+void Si5351::setCorrection(int32_t corr, enum si5351_pll_input ref_osc)
 {
     ref_correction[(uint8_t)ref_osc] = corr;
-    set_pll(plla_freq, SI5351_PLLA);
-    set_pll(pllb_freq, SI5351_PLLB);
+    setPll(plla_freq, SI5351_PLLA);
+    setPll(pllb_freq, SI5351_PLLB);
 }
 
 /*
- * set_phase(enum si5351_clock clk, uint8_t phase)
+ * setPhase(enum si5351_clock clk, uint8_t phase)
  *
  * Write the 7-bit phase offset register for the given clock.
  * Units are VCO/4 period.
  */
-void Si5351::set_phase(enum si5351_clock clk, uint8_t phase)
+void Si5351::setPhase(enum si5351_clock clk, uint8_t phase)
 {
-    si5351_write(SI5351_CLK0_PHASE_OFFSET + (uint8_t)clk,
+    write(SI5351_CLK0_PHASE_OFFSET + (uint8_t)clk,
                  phase & 0x7F);
 }
 
 /*
- * get_correction(enum si5351_pll_input ref_osc)
+ * getCorrection(enum si5351_pll_input ref_osc)
  *
  * Return the stored ppb correction for the given reference oscillator.
  */
-int32_t Si5351::get_correction(enum si5351_pll_input ref_osc)
+int32_t Si5351::getCorrection(enum si5351_pll_input ref_osc)
 {
     return ref_correction[(uint8_t)ref_osc];
 }
 
 /*
- * pll_reset(enum si5351_pll target_pll)
+ * pllReset(enum si5351_pll target_pll)
  *
  * Issue a soft reset to the specified PLL.
  */
-void Si5351::pll_reset(enum si5351_pll target_pll)
+void Si5351::pllReset(enum si5351_pll target_pll)
 {
     if (target_pll == SI5351_PLLA)
-        si5351_write(SI5351_PLL_RESET, SI5351_PLL_RESET_A);
+        write(SI5351_PLL_RESET, SI5351_PLL_RESET_A);
     else
-        si5351_write(SI5351_PLL_RESET, SI5351_PLL_RESET_B);
+        write(SI5351_PLL_RESET, SI5351_PLL_RESET_B);
 }
 
 /*
- * set_ms_source(enum si5351_clock clk, enum si5351_pll pll)
+ * setMsSource(enum si5351_clock clk, enum si5351_pll pll)
  *
  * Select which PLL drives the given Multisynth.
  */
-void Si5351::set_ms_source(enum si5351_clock clk, enum si5351_pll pll)
+void Si5351::setMsSource(enum si5351_clock clk, enum si5351_pll pll)
 {
-    uint8_t reg_val = si5351_read(SI5351_CLK0_CTRL + (uint8_t)clk);
+    uint8_t reg_val = read(SI5351_CLK0_CTRL + (uint8_t)clk);
 
     if (pll == SI5351_PLLA)
         reg_val &= ~SI5351_CLK_PLL_SELECT;
     else
         reg_val |=  SI5351_CLK_PLL_SELECT;
 
-    si5351_write(SI5351_CLK0_CTRL + (uint8_t)clk, reg_val);
+    write(SI5351_CLK0_CTRL + (uint8_t)clk, reg_val);
     pll_assignment[(uint8_t)clk] = pll;
 }
 
 /*
- * set_int(enum si5351_clock clk, uint8_t enable)
+ * setInt(enum si5351_clock clk, uint8_t enable)
  *
  * Enable (1) or disable (0) integer mode for a Multisynth.
  */
-void Si5351::set_int(enum si5351_clock clk, uint8_t enable)
+void Si5351::setInt(enum si5351_clock clk, uint8_t enable)
 {
-    uint8_t reg_val = si5351_read(SI5351_CLK0_CTRL + (uint8_t)clk);
+    uint8_t reg_val = read(SI5351_CLK0_CTRL + (uint8_t)clk);
 
     if (enable == 1)
         reg_val |=  SI5351_CLK_INTEGER_MODE;
     else
         reg_val &= ~SI5351_CLK_INTEGER_MODE;
 
-    si5351_write(SI5351_CLK0_CTRL + (uint8_t)clk, reg_val);
+    write(SI5351_CLK0_CTRL + (uint8_t)clk, reg_val);
 }
 
 /*
- * set_clock_pwr(enum si5351_clock clk, uint8_t pwr)
+ * setClockPwr(enum si5351_clock clk, uint8_t pwr)
  *
  * Enable (1) or disable (0) power to a clock output.
  */
-void Si5351::set_clock_pwr(enum si5351_clock clk, uint8_t pwr)
+void Si5351::setClockPwr(enum si5351_clock clk, uint8_t pwr)
 {
-    uint8_t reg_val = si5351_read(SI5351_CLK0_CTRL + (uint8_t)clk);
+    uint8_t reg_val = read(SI5351_CLK0_CTRL + (uint8_t)clk);
 
     if (pwr == 1)
         reg_val &= 0x7F;
     else
         reg_val |= 0x80;
 
-    si5351_write(SI5351_CLK0_CTRL + (uint8_t)clk, reg_val);
+    write(SI5351_CLK0_CTRL + (uint8_t)clk, reg_val);
 }
 
 /*
- * set_clock_invert(enum si5351_clock clk, uint8_t inv)
+ * setClockInvert(enum si5351_clock clk, uint8_t inv)
  *
  * Invert (1) or normal (0) the clock output waveform.
  */
-void Si5351::set_clock_invert(enum si5351_clock clk, uint8_t inv)
+void Si5351::setClockInvert(enum si5351_clock clk, uint8_t inv)
 {
-    uint8_t reg_val = si5351_read(SI5351_CLK0_CTRL + (uint8_t)clk);
+    uint8_t reg_val = read(SI5351_CLK0_CTRL + (uint8_t)clk);
 
     if (inv == 1)
         reg_val |=  SI5351_CLK_INVERT;
     else
         reg_val &= ~SI5351_CLK_INVERT;
 
-    si5351_write(SI5351_CLK0_CTRL + (uint8_t)clk, reg_val);
+    write(SI5351_CLK0_CTRL + (uint8_t)clk, reg_val);
 }
 
 /*
- * set_clock_source(enum si5351_clock clk, enum si5351_clock_source src)
+ * setClockSource(enum si5351_clock clk, enum si5351_clock_source src)
  *
  * Set the clock source for a Multisynth (XTAL, CLKIN, MS0, or own MS).
  */
-void Si5351::set_clock_source(enum si5351_clock clk,
+void Si5351::setClockSource(enum si5351_clock clk,
                                enum si5351_clock_source src)
 {
-    uint8_t reg_val = si5351_read(SI5351_CLK0_CTRL + (uint8_t)clk);
+    uint8_t reg_val = read(SI5351_CLK0_CTRL + (uint8_t)clk);
     reg_val &= ~SI5351_CLK_INPUT_MASK;
 
     switch (src)
@@ -701,15 +701,15 @@ void Si5351::set_clock_source(enum si5351_clock clk,
         return;
     }
 
-    si5351_write(SI5351_CLK0_CTRL + (uint8_t)clk, reg_val);
+    write(SI5351_CLK0_CTRL + (uint8_t)clk, reg_val);
 }
 
 /*
- * set_clock_disable(enum si5351_clock clk, enum si5351_clock_disable dis_state)
+ * setClockDisable(enum si5351_clock clk, enum si5351_clock_disable dis_state)
  *
  * Set the output state when the clock is disabled (low, high, Hi-Z, never).
  */
-void Si5351::set_clock_disable(enum si5351_clock clk,
+void Si5351::setClockDisable(enum si5351_clock clk,
                                 enum si5351_clock_disable dis_state)
 {
     uint8_t reg_val, reg;
@@ -718,7 +718,7 @@ void Si5351::set_clock_disable(enum si5351_clock clk,
     else if (clk >= SI5351_CLK4 && clk <= SI5351_CLK7) reg = SI5351_CLK7_4_DISABLE_STATE;
     else return;
 
-    reg_val = si5351_read(reg);
+    reg_val = read(reg);
 
     if (clk >= SI5351_CLK0 && clk <= SI5351_CLK3)
     {
@@ -731,17 +731,17 @@ void Si5351::set_clock_disable(enum si5351_clock clk,
         reg_val |= (dis_state << ((clk - 4) * 2));
     }
 
-    si5351_write(reg, reg_val);
+    write(reg, reg_val);
 }
 
 /*
- * set_clock_fanout(enum si5351_clock_fanout fanout, uint8_t enable)
+ * setClockFanout(enum si5351_clock_fanout fanout, uint8_t enable)
  *
  * Enable (1) or disable (0) a fanout option (CLKIN, XO, Multisynth).
  */
-void Si5351::set_clock_fanout(enum si5351_clock_fanout fanout, uint8_t enable)
+void Si5351::setClockFanout(enum si5351_clock_fanout fanout, uint8_t enable)
 {
-    uint8_t reg_val = si5351_read(SI5351_FANOUT_ENABLE);
+    uint8_t reg_val = read(SI5351_FANOUT_ENABLE);
 
     switch (fanout)
     {
@@ -759,17 +759,17 @@ void Si5351::set_clock_fanout(enum si5351_clock_fanout fanout, uint8_t enable)
         break;
     }
 
-    si5351_write(SI5351_FANOUT_ENABLE, reg_val);
+    write(SI5351_FANOUT_ENABLE, reg_val);
 }
 
 /*
- * set_pll_input(enum si5351_pll pll, enum si5351_pll_input input)
+ * setPllInput(enum si5351_pll pll, enum si5351_pll_input input)
  *
  * Select XO or CLKIN as the reference for the given PLL.
  */
-void Si5351::set_pll_input(enum si5351_pll pll, enum si5351_pll_input input)
+void Si5351::setPllInput(enum si5351_pll pll, enum si5351_pll_input input)
 {
-    uint8_t reg_val = si5351_read(SI5351_PLL_INPUT_SOURCE);
+    uint8_t reg_val = read(SI5351_PLL_INPUT_SOURCE);
 
     switch (pll)
     {
@@ -803,19 +803,19 @@ void Si5351::set_pll_input(enum si5351_pll pll, enum si5351_pll_input input)
         return;
     }
 
-    si5351_write(SI5351_PLL_INPUT_SOURCE, reg_val);
-    set_pll(plla_freq, SI5351_PLLA);
-    set_pll(pllb_freq, SI5351_PLLB);
+    write(SI5351_PLL_INPUT_SOURCE, reg_val);
+    setPll(plla_freq, SI5351_PLLA);
+    setPll(pllb_freq, SI5351_PLLB);
 }
 
 /*
- * set_vcxo(uint64_t pll_freq, uint8_t ppm)
+ * setVcxo(uint64_t pll_freq, uint8_t ppm)
  *
  * Configure the VCXO parameters (Si5351B only).
  * pll_freq - Desired PLLB VCO frequency in Hz * 100.
  * ppm      - VCXO pull range in ppm (30 – 240).
  */
-void Si5351::set_vcxo(uint64_t pll_freq, uint8_t ppm)
+void Si5351::setVcxo(uint64_t pll_freq, uint8_t ppm)
 {
     struct Si5351RegSet pll_reg;
     uint64_t vcxo_param;
@@ -824,7 +824,7 @@ void Si5351::set_vcxo(uint64_t pll_freq, uint8_t ppm)
     if (ppm < SI5351_VCXO_PULL_MIN) ppm = SI5351_VCXO_PULL_MIN;
     if (ppm > SI5351_VCXO_PULL_MAX) ppm = SI5351_VCXO_PULL_MAX;
 
-    vcxo_param = pll_calc(SI5351_PLLB, pll_freq, &pll_reg,
+    vcxo_param = pllCalc(SI5351_PLLB, pll_freq, &pll_reg,
                           ref_correction[pllb_ref_osc], 1);
 
     uint8_t params[8];
@@ -840,27 +840,27 @@ void Si5351::set_vcxo(uint64_t pll_freq, uint8_t ppm)
     params[i++] = (uint8_t)((pll_reg.p2 >>  8) & 0xFF);
     params[i++] = (uint8_t)( pll_reg.p2        & 0xFF);
 
-    si5351_write_bulk(SI5351_PLLB_PARAMETERS, i, params);
+    writeBulk(SI5351_PLLB_PARAMETERS, i, params);
 
     vcxo_param = ((vcxo_param * ppm * SI5351_VCXO_MARGIN) / 100ULL) / 1000000ULL;
 
     temp = (uint8_t)(vcxo_param & 0xFF);
-    si5351_write(SI5351_VXCO_PARAMETERS_LOW, temp);
+    write(SI5351_VXCO_PARAMETERS_LOW, temp);
 
     temp = (uint8_t)((vcxo_param >> 8) & 0xFF);
-    si5351_write(SI5351_VXCO_PARAMETERS_MID, temp);
+    write(SI5351_VXCO_PARAMETERS_MID, temp);
 
     temp = (uint8_t)((vcxo_param >> 16) & 0x3F);
-    si5351_write(SI5351_VXCO_PARAMETERS_HIGH, temp);
+    write(SI5351_VXCO_PARAMETERS_HIGH, temp);
 }
 
 /*
- * set_ref_freq(uint32_t ref_freq, enum si5351_pll_input ref_osc)
+ * setRefFreq(uint32_t ref_freq, enum si5351_pll_input ref_osc)
  *
  * Set the reference oscillator frequency (and CLKIN pre-divider) for
  * the chosen reference input.
  */
-void Si5351::set_ref_freq(uint32_t ref_freq, enum si5351_pll_input ref_osc)
+void Si5351::setRefFreq(uint32_t ref_freq, enum si5351_pll_input ref_osc)
 {
     if (ref_freq <= 30000000UL)
     {
@@ -888,12 +888,12 @@ void Si5351::set_ref_freq(uint32_t ref_freq, enum si5351_pll_input ref_osc)
 /* ------------------------------------------------------------------ */
 
 /*
- * si5351_write_bulk(uint8_t addr, uint8_t bytes, uint8_t *data)
+ * writeBulk(uint8_t addr, uint8_t bytes, uint8_t *data)
  *
  * Write `bytes` bytes starting at register `addr`.
  * The register address and data are sent in a single I2C transaction.
  */
-HAL_StatusTypeDef Si5351::si5351_write_bulk(uint8_t addr, uint8_t bytes,
+HAL_StatusTypeDef Si5351::writeBulk(uint8_t addr, uint8_t bytes,
                                              uint8_t *data)
 {
     /* Build a single contiguous buffer: [addr, data0, data1, ...] */
@@ -908,11 +908,11 @@ HAL_StatusTypeDef Si5351::si5351_write_bulk(uint8_t addr, uint8_t bytes,
 }
 
 /*
- * si5351_write(uint8_t addr, uint8_t data)
+ * write(uint8_t addr, uint8_t data)
  *
  * Write a single byte to register `addr`.
  */
-HAL_StatusTypeDef Si5351::si5351_write(uint8_t addr, uint8_t data)
+HAL_StatusTypeDef Si5351::write(uint8_t addr, uint8_t data)
 {
     uint8_t buf[2] = { addr, data };
     return HAL_I2C_Master_Transmit(hi2c, i2c_bus_addr,
@@ -921,12 +921,12 @@ HAL_StatusTypeDef Si5351::si5351_write(uint8_t addr, uint8_t data)
 }
 
 /*
- * si5351_read(uint8_t addr)
+ * read(uint8_t addr)
  *
  * Read and return a single byte from register `addr`.
  * Returns 0 if the I2C transaction fails.
  */
-uint8_t Si5351::si5351_read(uint8_t addr)
+uint8_t Si5351::read(uint8_t addr)
 {
     uint8_t reg_val = 0;
 
@@ -947,7 +947,7 @@ uint8_t Si5351::si5351_read(uint8_t addr)
 /* Private functions (all logic unchanged from the Arduino original)   */
 /* ================================================================== */
 
-uint64_t Si5351::pll_calc(enum si5351_pll pll, uint64_t freq,
+uint64_t Si5351::pllCalc(enum si5351_pll pll, uint64_t freq,
                            struct Si5351RegSet *reg,
                            int32_t correction, uint8_t vcxo)
 {
@@ -1008,7 +1008,7 @@ uint64_t Si5351::pll_calc(enum si5351_pll pll, uint64_t freq,
         return freq;
 }
 
-uint64_t Si5351::multisynth_calc(uint64_t freq, uint64_t pll_freq,
+uint64_t Si5351::multisynthCalc(uint64_t freq, uint64_t pll_freq,
                                   struct Si5351RegSet *reg)
 {
     uint64_t lltmp;
@@ -1075,7 +1075,7 @@ uint64_t Si5351::multisynth_calc(uint64_t freq, uint64_t pll_freq,
     return (ret_val == 0) ? pll_freq : freq;
 }
 
-uint64_t Si5351::multisynth67_calc(uint64_t freq, uint64_t pll_freq,
+uint64_t Si5351::multisynth67Calc(uint64_t freq, uint64_t pll_freq,
                                     struct Si5351RegSet *reg)
 {
     uint32_t a;
@@ -1133,9 +1133,9 @@ uint64_t Si5351::multisynth67_calc(uint64_t freq, uint64_t pll_freq,
     }
 }
 
-void Si5351::update_sys_status(struct Si5351Status *status)
+void Si5351::updateSysStatus(struct Si5351Status *status)
 {
-    uint8_t reg_val = si5351_read(SI5351_DEVICE_STATUS);
+    uint8_t reg_val = read(SI5351_DEVICE_STATUS);
 
     status->SYS_INIT = (reg_val >> 7) & 0x01;
     status->LOL_B    = (reg_val >> 6) & 0x01;
@@ -1144,9 +1144,9 @@ void Si5351::update_sys_status(struct Si5351Status *status)
     status->REVID    =  reg_val       & 0x03;
 }
 
-void Si5351::update_int_status(struct Si5351IntStatus *int_status)
+void Si5351::updateIntStatus(struct Si5351IntStatus *int_status)
 {
-    uint8_t reg_val = si5351_read(SI5351_INTERRUPT_STATUS);
+    uint8_t reg_val = read(SI5351_INTERRUPT_STATUS);
 
     int_status->SYS_INIT_STKY = (reg_val >> 7) & 0x01;
     int_status->LOL_B_STKY    = (reg_val >> 6) & 0x01;
@@ -1154,7 +1154,7 @@ void Si5351::update_int_status(struct Si5351IntStatus *int_status)
     int_status->LOS_STKY      = (reg_val >> 4) & 0x01;
 }
 
-void Si5351::ms_div(enum si5351_clock clk, uint8_t r_div, uint8_t div_by_4)
+void Si5351::msDiv(enum si5351_clock clk, uint8_t r_div, uint8_t div_by_4)
 {
     uint8_t reg_val  = 0;
     uint8_t reg_addr = 0;
@@ -1171,7 +1171,7 @@ void Si5351::ms_div(enum si5351_clock clk, uint8_t r_div, uint8_t div_by_4)
     case SI5351_CLK7: reg_addr = SI5351_CLK6_7_OUTPUT_DIVIDER; break;
     }
 
-    reg_val = si5351_read(reg_addr);
+    reg_val = read(reg_addr);
 
     if ((uint8_t)clk <= (uint8_t)SI5351_CLK5)
     {
@@ -1194,10 +1194,10 @@ void Si5351::ms_div(enum si5351_clock clk, uint8_t r_div, uint8_t div_by_4)
         reg_val |= (r_div << SI5351_OUTPUT_CLK_DIV_SHIFT);
     }
 
-    si5351_write(reg_addr, reg_val);
+    write(reg_addr, reg_val);
 }
 
-uint8_t Si5351::select_r_div(uint64_t *freq)
+uint8_t Si5351::selectRDiv(uint64_t *freq)
 {
     uint8_t r_div = SI5351_OUTPUT_CLK_DIV_1;
     const uint64_t base = SI5351_CLKOUT_MIN_FREQ * SI5351_FREQ_MULT;
@@ -1213,7 +1213,7 @@ uint8_t Si5351::select_r_div(uint64_t *freq)
     return r_div;
 }
 
-uint8_t Si5351::select_r_div_ms67(uint64_t *freq)
+uint8_t Si5351::selectRDivMs67(uint64_t *freq)
 {
     uint8_t r_div = SI5351_OUTPUT_CLK_DIV_1;
     const uint64_t base = SI5351_CLKOUT67_MIN_FREQ * SI5351_FREQ_MULT;
